@@ -1,82 +1,169 @@
-<div class="card mt-4">
-    <div class="card-header bg-primary text-white">
-        <h5><i class="bi bi-file-earmark-text"></i> 調閱社區監視器公文產生器</h5>
-    </div>
-    <div class="card-body">
-        <form id="officialDocForm">
-            <div class="row g-3">
-                <div class="col-md-6">
-                    <label class="form-label">社區名稱</label>
-                    <input type="text" id="communityName" class="form-control" placeholder="例如：幸福家園">
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>16H 偵查助手 Pro</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        :root { --primary-dark: #1a237e; --accent-blue: #0d6efd; }
+        body { background-color: #f8f9fa; font-family: -apple-system, sans-serif; }
+        .header-bg { background: linear-gradient(135deg, var(--primary-dark), var(--accent-blue)); color: white; padding: 25px 0; border-radius: 0 0 25px 25px; margin-bottom: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
+        .container { max-width: 600px; }
+        .card { border: none; border-radius: 15px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); }
+        .nav-pills .nav-link { color: #666; border-radius: 10px; padding: 10px; }
+        .nav-pills .nav-link.active { background-color: var(--primary-dark); color: white; }
+        .form-label { font-weight: 600; color: #444; display: flex; align-items: center; gap: 5px; }
+        .btn-action { border-radius: 10px; padding: 12px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .result-area { background-color: #f0f7ff; border-radius: 12px; padding: 15px; border-left: 5px solid var(--primary-dark); }
+    </style>
+</head>
+<body>
+
+<div class="header-bg text-center">
+    <h2 class="fw-bold mb-0"><i class="bi bi-shield-lock-fill me-2"></i>16H 偵查助手 Pro</h2>
+    <small style="opacity: 0.8;">數位執法輔助系統 v2.1</small>
+</div>
+
+<div class="container">
+    <ul class="nav nav-pills nav-fill mb-4 bg-white p-2 border rounded-pill" id="pills-tab" role="tablist">
+        <li class="nav-item">
+            <button class="nav-link active" data-bs-toggle="pill" data-bs-target="#calc-content"><i class="bi bi-hourglass-split"></i> 時限</button>
+        </li>
+        <li class="nav-item">
+            <button class="nav-link" data-bs-toggle="pill" data-bs-target="#doc-content"><i class="bi bi-file-earmark-text"></i> 公文</button>
+        </li>
+        <li class="nav-item">
+            <button class="nav-link" data-bs-toggle="pill" data-bs-target="#interrogation-content"><i class="bi bi-person-badge"></i> 偵詢</button>
+        </li>
+    </ul>
+
+    <div class="tab-content">
+        <div class="tab-pane fade show active" id="calc-content">
+            <div class="card p-4">
+                <h5 class="mb-4 fw-bold"><i class="bi bi-clock-history me-2 text-primary"></i>時限精算</h5>
+                <div class="mb-3">
+                    <label class="form-label">逮捕起算時間</label>
+                    <input type="datetime-local" id="arrestTime" class="form-control form-control-lg">
                 </div>
-                <div class="col-md-6">
-                    <label class="form-label">案由</label>
-                    <input type="text" id="caseReason" class="form-control" placeholder="例如：財物失竊案">
+                <div class="mb-4">
+                    <label class="form-label">扣除時數 (小時)</label>
+                    <input type="number" id="deductHours" class="form-control" value="0" step="0.5">
                 </div>
-                <div class="col-md-6">
-                    <label class="form-label">調閱開始時間</label>
-                    <input type="datetime-local" id="startTime" class="form-control">
+                <button class="btn btn-primary btn-action w-100" onclick="calculateTime()">計算法律時限</button>
+                <div id="calcResult" class="mt-4 result-area" style="display:none;"></div>
+            </div>
+        </div>
+
+        <div class="tab-pane fade" id="doc-content">
+            <div class="card p-4">
+                <h5 class="mb-4 fw-bold"><i class="bi bi-camera-video me-2 text-success"></i>監視器調閱函</h5>
+                <div class="mb-3">
+                    <label class="form-label">對象管委會</label>
+                    <input type="text" id="commName" class="form-control" placeholder="輸入社區名稱">
                 </div>
-                <div class="col-md-6">
-                    <label class="form-label">調閱結束時間</label>
-                    <input type="datetime-local" id="endTime" class="form-control">
+                <div class="row g-2 mb-3">
+                    <div class="col-6">
+                        <label class="small fw-bold">起始時段</label>
+                        <input type="datetime-local" id="vStart" class="form-control">
+                    </div>
+                    <div class="col-6">
+                        <label class="small fw-bold">結束時段</label>
+                        <input type="datetime-local" id="vEnd" class="form-control">
+                    </div>
                 </div>
-                <div class="col-12">
-                    <label class="form-label">鏡頭位置描述</label>
-                    <textarea id="cameraLocation" class="form-control" rows="2" placeholder="例如：大門入口、地下車道出入口"></textarea>
+                <div class="mb-4">
+                    <label class="form-label">鏡頭位置</label>
+                    <input type="text" id="camPos" class="form-control" placeholder="大門、電梯、車道...">
+                </div>
+                <button class="btn btn-success btn-action w-100" onclick="generateDoc()">生成公文範本</button>
+                <div id="docResult" class="mt-4" style="display:none;">
+                    <div id="docBody" class="p-3 border bg-white small rounded shadow-sm" style="white-space: pre-wrap; line-height: 1.6; font-family: serif;"></div>
+                    <button class="btn btn-outline-primary btn-action w-100 mt-2 btn-sm" onclick="copyContent('docBody')"><i class="bi bi-copy"></i> 複製文字</button>
                 </div>
             </div>
-            <button type="button" class="btn btn-success mt-3" onclick="generateDoc()">生成公文範本</button>
-        </form>
+        </div>
 
-        <div id="docResult" class="mt-4" style="display:none;">
-            <h6>產生的公文內容：</h6>
-            <div class="border p-3 bg-light" id="docContent" style="white-space: pre-wrap; font-family: '標楷體', serif;"></div>
-            <button class="btn btn-outline-secondary btn-sm mt-2" onclick="copyToClipboard()">複製文字</button>
+        <div class="tab-pane fade" id="interrogation-content">
+            <div class="card p-4">
+                <h5 class="mb-4 fw-bold"><i class="bi bi-mic me-2 text-danger"></i>偵詢筆錄助手</h5>
+                <div class="mb-4">
+                    <label class="form-label">受詢問人姓名</label>
+                    <input type="text" id="subjectName" class="form-control" placeholder="輸入姓名">
+                </div>
+                <div class="d-grid gap-3">
+                    <button class="btn btn-outline-danger btn-action" onclick="generateRights()">權利告知 (刑訴95)</button>
+                    <button class="btn btn-outline-dark btn-action" onclick="generateInitial()">筆錄開頭/提審告知</button>
+                </div>
+                <div id="interResult" class="mt-4" style="display:none;">
+                    <div id="interBody" class="p-3 border bg-white small rounded shadow-sm" style="white-space: pre-wrap;"></div>
+                    <button class="btn btn-outline-primary btn-action w-100 mt-2 btn-sm" onclick="copyContent('interBody')"><i class="bi bi-copy"></i> 複製文字</button>
+                </div>
+            </div>
         </div>
     </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-function generateDoc() {
-    const community = document.getElementById('communityName').value || "（社區名稱）";
-    const reason = document.getElementById('caseReason').value || "（案由）";
-    const start = document.getElementById('startTime').value.replace('T', ' ');
-    const end = document.getElementById('endTime').value.replace('T', ' ');
-    const location = document.getElementById('cameraLocation').value || "相關監視器鏡頭";
-    
-    const today = new Date();
-    const dateStr = `中華民國 ${today.getFullYear() - 1911} 年 ${today.getMonth() + 1} 月 ${today.getDate()} 日`;
+    function calculateTime() {
+        const arrest = new Date(document.getElementById('arrestTime').value);
+        const deduct = parseFloat(document.getElementById('deductHours').value) || 0;
+        if (isNaN(arrest)) return alert("請輸入時間");
+        const deadline = new Date(arrest.getTime() + (16 + deduct) * 60 * 60 * 1000);
+        const suggest = new Date(deadline.getTime() - 2 * 60 * 60 * 1000);
+        document.getElementById('calcResult').innerHTML = `<strong>移送建議：</strong><br>${suggest.toLocaleString()}<br><strong class="text-danger">法律底線：</strong><br>${deadline.toLocaleString()}`;
+        document.getElementById('calcResult').style.display = 'block';
+    }
 
-    const template = `（機關名稱） 函
-
+    function generateDoc() {
+        const today = new Date();
+        const rocYear = today.getFullYear() - 1911;
+        const dateStr = `中華民國 ${rocYear} 年 ${today.getMonth()+1} 月 ${today.getDate()} 日`;
+        
+        // 使用您指定的公版內容
+        const template = `（機關名稱） 函
 發文日期：${dateStr}
 發文字號：（年度）字第（編號）號
-速別：普通件
-密等及解密條件或保密期限：普通
 
-主旨：為辦理${reason}偵查需要，請 貴管理委員會協助提供社區監視器影像資料，請 查照。
+主旨：請 貴管理委員會協助提供社區監視器影像資料及住戶進出名單，請 查照。
 
 說明：
-一、依據《刑事訴訟法》第 230 條、第 231 條及《個人資料保護法》第 15 條及第 16 條規定辦理。
-二、案緣本機關近日接獲民眾報案，於 貴社區周邊發生${reason}，為釐清事實真相及追蹤嫌疑人動線，確有調閱監視器之必要。
-三、需調閱之相關資訊如下：
-    * 調閱時段：${start} 至 ${end}。
-    * 鏡頭位置：${location}。
-四、貴管理委員會提供之影像資料，僅供本機關執行公務使用，本機關將依《個人資料保護法》相關規定負保密之責。
-五、如能提供協助，請將相關影像儲存於隨身碟或光碟，由本案承辦人領取，或通知本機關派員前往現場拷貝。
+一、依據刑事訴訟法第230條、第231條及個人資料保護法第15條、第16條規定辦理。
+二、本隊因偵辦刑事案件，亟需貴社區提供監視器相關影像及住戶進出名單，為釐清事實真相及追蹤嫌疑人動線，確有調閱之必要。
+三、需調閱資訊如下：
+    * 調閱時段：${document.getElementById('vStart').value.replace('T',' ')} 至 ${document.getElementById('vEnd').value.replace('T',' ')}。
+    * 鏡頭位置：${document.getElementById('camPos').value}。
+四、貴會提供之資料僅供本機關偵辦案件使用，本機關依規負保密之責。
 
-正本：${community}管理委員會
-副本：本機關存查單位`;
+正本：${document.getElementById('commName').value}管理委員會`;
 
-    document.getElementById('docContent').innerText = template;
-    document.getElementById('docResult').style.display = 'block';
-}
+        document.getElementById('docBody').innerText = template;
+        document.getElementById('docResult').style.display = 'block';
+    }
 
-function copyToClipboard() {
-    const content = document.getElementById('docContent').innerText;
-    navigator.clipboard.writeText(content).then(() => {
-        alert('公文內容已複製到剪貼簿');
-    });
-}
+    function generateRights() {
+        const name = document.getElementById('subjectName').value || "受詢問人";
+        const text = `${name}，你涉嫌犯罪，依據刑事訴訟法第95條告知權利：\n一、得保持沉默，無須違背自己之意思而為陳述。\n二、得選任辯護人。\n三、得請求調查有利之證據。`;
+        showInter(text);
+    }
+
+    function generateInitial() {
+        const text = `問：上述年籍資料是否正確？權利告知是否瞭解？\n答：正確。瞭解。\n問：依提審法規定，你得向法院聲請提審，是否瞭解？有無需要？\n答：瞭解。不需要。`;
+        showInter(text);
+    }
+
+    function showInter(t) {
+        document.getElementById('interBody').innerText = t;
+        document.getElementById('interResult').style.display = 'block';
+    }
+
+    function copyContent(id) {
+        navigator.clipboard.writeText(document.getElementById(id).innerText);
+        alert("已複製！");
+    }
 </script>
+</body>
+</html>
+
