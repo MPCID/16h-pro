@@ -9,28 +9,18 @@
     <style>
         :root { --primary-dark: #002366; --accent-blue: #0d6efd; --military-gold: #c5a059; }
         body { background-color: #f4f7f6; font-family: -apple-system, "Microsoft JhengHei", sans-serif; }
-        .header-bg { background: linear-gradient(135deg, var(--primary-dark), var(--accent-blue)); color: white; padding: 20px 0; border-radius: 0 0 20px 25px; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
+        .header-bg { background: linear-gradient(135deg, var(--primary-dark), var(--accent-blue)); color: white; padding: 20px 0; border-radius: 0 0 20px 25px; margin-bottom: 20px; }
         .container { max-width: 650px; }
         .card { border: none; border-radius: 15px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); margin-bottom: 15px; }
-        .nav-pills .nav-link { color: #666; border-radius: 10px; padding: 10px; font-weight: bold; }
+        .nav-pills .nav-link { color: #666; border-radius: 10px; padding: 10px; font-weight: bold; font-size: 0.85rem; }
         .nav-pills .nav-link.active { background-color: var(--primary-dark); color: white; }
         .result-area { background-color: #fff; border-radius: 12px; padding: 20px; border-left: 6px solid var(--primary-dark); line-height: 1.8; font-size: 0.9rem; }
-        .analysis-title { color: var(--primary-dark); border-bottom: 2px solid var(--military-gold); padding-bottom: 5px; margin-top: 15px; font-weight: bold; font-size: 1rem; }
+        .analysis-title { color: var(--primary-dark); border-bottom: 2px solid var(--military-gold); padding-bottom: 5px; margin-top: 15px; font-weight: bold; }
         .q-box { background-color: #f8f9fa; border-radius: 8px; padding: 12px; margin-top: 10px; border: 1px dashed #ccc; }
-        .law-highlight { background-color: #eef2ff; color: #1e40af; padding: 2px 6px; border-radius: 4px; font-weight: bold; }
+        .law-badge { background-color: #eef2ff; color: #1e40af; padding: 2px 8px; border-radius: 5px; font-weight: bold; font-size: 0.8rem; }
     </style>
 </head>
 <body>
-
-<div class="modal fade" id="disclaimerModal" data-bs-backdrop="static" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content border-0 shadow-lg" style="border-radius: 20px;">
-            <div class="modal-header border-0 mt-2"><h5 class="modal-title fw-bold text-danger"><i class="bi bi-shield-lock-fill"></i> 執法資安規範聲明</h5></div>
-            <div class="modal-body small text-secondary">1. 嚴禁輸入真實姓名。<br>2. 本程式依據刑訴法 93-1 條設計。<br>3. 數據採本地加密運算，不留存、不紀錄。</div>
-            <div class="modal-footer border-0"><button type="button" class="btn btn-primary w-100 fw-bold" data-bs-dismiss="modal">遵照規範使用</button></div>
-        </div>
-    </div>
-</div>
 
 <div class="header-bg text-center">
     <h3 class="fw-bold mb-0">16H 偵查助手 Pro</h3>
@@ -45,24 +35,25 @@
     </ul>
 
     <div class="tab-content">
+        <div class="tab-pane fade" id="analysis-content">
+            <div class="card p-4 shadow-sm">
+                <h6 class="fw-bold mb-3 text-warning"><i class="bi bi-mortarboard-fill"></i> 智慧筆錄製作與法律分析</h6>
+                <textarea id="caseBrief" class="form-control mb-3" rows="4" placeholder="輸入案情（例：蔡上士在營區寢室內毆打吳上兵...）"></textarea>
+                <button class="btn btn-warning w-100 fw-bold shadow-sm" onclick="mentorAnalyze()">啟動智慧分析</button>
+                <div id="aRes" class="mt-4 result-area" style="display:none;"></div>
+            </div>
+        </div>
+
         <div class="tab-pane fade show active" id="calc-content">
             <div class="card p-4 shadow-sm">
                 <h6 class="fw-bold mb-3 text-primary border-bottom pb-2">刑訴法 93-1 障礙時限</h6>
                 <label class="form-label text-danger fw-bold">逮捕/到案時間</label>
                 <input type="datetime-local" id="startTime" class="form-control mb-3">
                 <div class="p-3 bg-light rounded-3 mb-3">
-                    <label class="form-label text-primary">法定障礙時間累計：</label>
+                    <label class="form-label text-primary small fw-bold">法定障礙時間 (小時/分鐘)：</label>
                     <div class="row g-2">
-                        <div class="col-6">
-                            <div class="input-group input-group-sm">
-                                <input type="number" id="dH" class="form-control" placeholder="0"><span class="input-group-text">小時</span>
-                            </div>
-                        </div>
-                        <div class="col-6">
-                            <div class="input-group input-group-sm">
-                                <input type="number" id="dM" class="form-control" placeholder="0"><span class="input-group-text">分鐘</span>
-                            </div>
-                        </div>
+                        <div class="col-6"><div class="input-group input-group-sm"><input type="number" id="dH" class="form-control" placeholder="0"><span class="input-group-text">時</span></div></div>
+                        <div class="col-6"><div class="input-group input-group-sm"><input type="number" id="dM" class="form-control" placeholder="0"><span class="input-group-text">分</span></div></div>
                     </div>
                 </div>
                 <button class="btn btn-primary w-100 fw-bold" onclick="calc931()">執行精算</button>
@@ -70,30 +61,75 @@
             </div>
         </div>
 
-        <div class="tab-pane fade" id="analysis-content">
-            <div class="card p-4 shadow-sm">
-                <h6 class="fw-bold mb-3 text-warning"><i class="bi bi-cpu-fill"></i> 智慧筆錄製作與法律分析</h6>
-                <textarea id="caseBrief" class="form-control mb-3" rows="4" placeholder="輸入案情（例：蔡員毆打下士官兵...）"></textarea>
-                <button class="btn btn-warning w-100 fw-bold shadow-sm" onclick="mentorAnalyze()">啟動智慧導師分析</button>
-                <div id="aRes" class="mt-4 result-area" style="display:none;"></div>
-            </div>
-        </div>
-
         <div class="tab-pane fade" id="doc-content">
             <div class="card p-4 shadow-sm">
-                <h6 class="fw-bold mb-3 text-success">臺北憲兵隊 調閱公文產生</h6>
+                <h6 class="fw-bold mb-3 text-success">調閱公文產生</h6>
                 <input type="text" id="commN" class="form-control mb-2" placeholder="社區/單位名稱">
-                <input type="text" id="cPos" class="form-control mb-3" placeholder="調閱範圍 (如：監視器影像)">
                 <button class="btn btn-success w-100 fw-bold" onclick="genDoc()">生成公文</button>
-                <div id="dRes" class="mt-4"><div id="dBody" class="p-3 border bg-white small rounded shadow-sm" style="white-space: pre-wrap; font-family: serif;"></div></div>
+                <div id="dRes" class="mt-4"><div id="dBody" class="p-3 border bg-white small rounded" style="white-space: pre-wrap; font-family: serif;"></div></div>
             </div>
         </div>
     </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-    window.onload = function() { new bootstrap.Modal(document.getElementById('disclaimerModal')).show(); };
+    function mentorAnalyze() {
+        const text = document.getElementById('caseBrief').value;
+        if (!text) return alert("請輸入內容");
+        
+        let info = { title: "一般案件", code: "刑事訴訟法", elements: "", questions: [] };
+
+        // 核心判斷引擎 (增加軍事傷害案權重)
+        const isAssault = ["打", "毆", "傷", "踢", "痛", "暴力", "強暴", "教訓"].some(k => text.includes(k));
+        const isTheft = ["竊", "拿", "偷", "取", "私吞", "錢"].some(k => text.includes(k));
+
+        if (isAssault) {
+            info = {
+                title: "傷害/強暴罪 (軍事範疇)",
+                code: "刑法第 277 條、陸海空軍刑法第 49/50 條",
+                elements: "1. <b>主觀要件：</b>具備傷害故意或強暴意圖。<br>2. <b>客觀行為：</b>施以強暴、威脅或其他物理力傷害身體。<br>3. <b>身分加重：</b>若為長官對部屬、或對值勤中軍人施暴，屬加重情節。",
+                questions: [
+                    "<b>Q1：</b>案發當時，你與被害人的職位關係為何？當時是否在執行勤務？",
+                    "<b>Q2：</b>你實施毆打的具體動機為何？是因為管教還是私怨？",
+                    "<b>Q3：</b>你當時是用徒手還是持械？毆打部位是臉部還是身體？(確認是否有致死或重傷意圖)",
+                    "<b>Q4：</b>被害人受傷後，你是否有採取的救助行動或繼續施暴？"
+                ]
+            };
+        } else if (isTheft) {
+            info = {
+                title: "普通竊盜罪",
+                code: "刑法第 320 條、陸海空軍刑法第 76 條第 1 項第 8 款",
+                elements: "1. <b>主觀要件：</b>具備不法所有意圖。<br>2. <b>客觀行為：</b>破壞他人持有關係，建立自己持有。",
+                questions: [
+                    "<b>Q1：</b>你取得該財物前，是否有經過所有人同意？",
+                    "<b>Q2：</b>你拿走財物後，是打算自用還是變賣？",
+                    "<b>Q3：</b>該財物目前位於何處？是否已歸還？"
+                ]
+            };
+        }
+
+        let content = `
+            <div class="text-center fw-bold text-primary mb-3">✨ 偵訊導師分析指引 ✨</div>
+            你好！我是你的偵訊導師。針對此案，我為你整理了核心指引：
+            
+            <div class="analysis-title">1. ✨ 構成要件分析：【${info.title}】</div>
+            依據 <span class="law-badge">${info.code}</span> 規定：
+            <div class="mt-2">${info.elements}</div>
+
+            <div class="analysis-title">2. ✨ 詢問策略：關鍵 Q&A</div>
+            <div class="q-box">
+                ${info.questions.map(q => `<div class="mb-2">${q}</div>`).join('')}
+            </div>
+
+            <div class="analysis-title">3. ✨ 程序提醒</div>
+            <ul class="small">
+                <li><b>刑訴 95 條：</b>權利告知必須完整落實。</li>
+                <li><b>全程錄影：</b>憲兵製作筆錄必須確保錄影連貫性。</li>
+            </ul>
+        `;
+        document.getElementById('aRes').innerHTML = content;
+        document.getElementById('aRes').style.display = 'block';
+    }
 
     function calc931() {
         const s = new Date(document.getElementById('startTime').value);
@@ -101,61 +137,14 @@
         const h = parseInt(document.getElementById('dH').value) || 0;
         const m = parseInt(document.getElementById('dM').value) || 0;
         const dl = new Date(s.getTime() + (16 * 60 + h * 60 + m) * 60000);
-        document.getElementById('cRes').innerHTML = `障礙扣除：${h}時${m}分<br>法律底線：<b class="text-danger">${dl.toLocaleString()}</b>`;
+        document.getElementById('cRes').innerHTML = `障礙扣除：${h}時${m}分<br><b class="text-danger">解送底線：${dl.toLocaleString()}</b>`;
         document.getElementById('cRes').style.display = 'block';
     }
 
-    function mentorAnalyze() {
-        const text = document.getElementById('caseBrief').value;
-        if (!text) return alert("請輸入內容");
-        
-        let lawInfo = { title: "一般案件", code: "刑事訴訟法", elements: "需視具體個案判定。", questions: ["Q1：事實經過？","Q2：動機？"] };
-
-        // 偵查與法規融合邏輯
-        if (text.includes("打") || text.includes("毆") || text.includes("傷")) {
-            lawInfo = {
-                title: "普通傷害罪",
-                code: "刑法第 277 條、陸海空軍刑法第 76 條第 1 項第 1 款",
-                elements: "1. <b>主觀：</b>具備傷害之故意。<br>2. <b>客觀：</b>實施毆打行為導致受詢問人受有身體或健康之傷害。<br>3. <b>身分：</b>上對下之毆打可能涉及軍事體制紀律。",
-                questions: [
-                    "<b>Q1：</b>你與被害人是否有何嫌隙？為何實施毆打？",
-                    "<b>Q2：</b>你當時是用徒手還是持械毆打？毆打部位為何？",
-                    "<b>Q3：</b>當時是否有其他人在場目擊？被害人受傷程度你是否知悉？"
-                ]
-            };
-        } else if (text.includes("竊") || text.includes("拿") || text.includes("偷")) {
-            lawInfo = {
-                title: "普通竊盜罪",
-                code: "刑法第 320 條、陸海空軍刑法第 76 條第 1 項第 8 款",
-                elements: "1. <b>主觀：</b>不法所有意圖。<br>2. <b>客觀：</b>破壞他人持有，建立自己持有。",
-                questions: ["<b>Q1：</b>是否未經同意取得？","<b>Q2：</b>物品現位於何處？"]
-            };
-        }
-
-        let content = `
-            <div class="text-center fw-bold text-primary mb-3">✨ 偵訊導師智慧指引 ✨</div>
-            你好！針對此案，我根據《偵詢要領手冊》及相關法律規範為你整理如下：
-            <div class="analysis-title">1. ✨ 構成要件分析：【${lawInfo.title}】</div>
-            本案涉及 <span class="law-highlight">${lawInfo.code}</span>：
-            <div class="mt-2 small">${lawInfo.elements}</div>
-            <div class="analysis-title">2. ✨ 詢問策略：關鍵 Q&A</div>
-            <div class="q-box">
-                ${lawInfo.questions.map(q => `<div class="mb-2">${q}</div>`).join('')}
-            </div>
-            <div class="analysis-title">3. ✨ 程序正義提醒</div>
-            <ul class="small mt-2">
-                <li><b>刑訴 95 條：</b>告知義務必須完整，否則筆錄無證據能力。</li>
-                <li><b>軍事通報：</b>現役軍人案件應通知所屬部隊長官或監察。</li>
-            </ul>
-        `;
-        document.getElementById('aRes').innerHTML = content;
-        document.getElementById('aRes').style.display = 'block';
-    }
-
     function genDoc() {
-        const t = `臺北憲兵隊 函\n主旨：協助調閱監視器。\n正本：${document.getElementById('commN').value}`;
-        document.getElementById('dBody').innerText = t;
+        document.getElementById('dBody').innerText = `臺北憲兵隊 函\n主旨：協助調閱監視器。\n單位：${document.getElementById('commN').value}`;
     }
 </script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
