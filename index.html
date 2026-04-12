@@ -7,119 +7,98 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <style>
-        :root { --primary-dark: #002366; --accent-blue: #0d6efd; }
-        body { background-color: #f8f9fa; font-family: -apple-system, sans-serif; }
-        .header-bg { background: linear-gradient(135deg, var(--primary-dark), var(--accent-blue)); color: white; padding: 20px 0; border-radius: 0 0 20px 25px; margin-bottom: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
-        .container { max-width: 600px; }
+        :root { --primary-dark: #002366; --accent-blue: #0d6efd; --military-gold: #c5a059; }
+        body { background-color: #f4f7f6; font-family: -apple-system, "Microsoft JhengHei", sans-serif; }
+        .header-bg { background: linear-gradient(135deg, var(--primary-dark), var(--accent-blue)); color: white; padding: 20px 0; border-radius: 0 0 20px 25px; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
+        .container { max-width: 650px; }
         .card { border: none; border-radius: 15px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); margin-bottom: 15px; }
-        .nav-pills .nav-link { color: #666; border-radius: 10px; padding: 10px; font-size: 0.9rem; }
+        .nav-pills .nav-link { color: #666; border-radius: 10px; padding: 10px; font-weight: bold; }
         .nav-pills .nav-link.active { background-color: var(--primary-dark); color: white; }
-        .form-label { font-weight: 600; color: #444; font-size: 0.85rem; margin-top: 8px; }
-        .btn-action { border-radius: 10px; padding: 10px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px; }
-        .result-area { background-color: #fff; border-radius: 12px; padding: 15px; border-left: 5px solid var(--primary-dark); font-size: 0.9rem; line-height: 1.6; }
-        .law-tag { background-color: #e8f0fe; color: #1a73e8; padding: 2px 8px; border-radius: 5px; font-weight: bold; font-size: 0.75rem; }
-        .time-box { background-color: #fff5f5; border: 1px solid #ffc9c9; border-radius: 8px; padding: 10px; }
+        .form-label { font-weight: 600; color: #333; font-size: 0.9rem; margin-top: 8px; }
+        .result-area { background-color: #fff; border-radius: 12px; padding: 18px; border-left: 6px solid var(--primary-dark); line-height: 1.8; }
+        .analysis-title { color: var(--primary-dark); border-bottom: 2px solid var(--military-gold); padding-bottom: 5px; margin-top: 15px; font-weight: bold; }
+        .q-box { background-color: #f8f9fa; border-radius: 8px; padding: 10px; margin-top: 10px; border: 1px dashed #ccc; }
+        .time-input-group { background-color: #fff; padding: 10px; border-radius: 10px; border: 1px solid #dee2e6; }
     </style>
 </head>
 <body>
 
-<div class="modal fade" id="disclaimerModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1">
+<div class="modal fade" id="disclaimerModal" data-bs-backdrop="static" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header"><h5 class="modal-title fw-bold text-danger">執法程序安全聲明</h5></div>
-            <div class="modal-body small">
-                <p>1. 嚴禁輸入真實姓名，請使用代稱。<br>2. 本程式依據<strong>刑訴法 93-1 條</strong>設計。<br>3. 數據僅存於本地，關閉即刪除。</p>
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 20px;">
+            <div class="modal-header border-0 mt-2"><h5 class="modal-title fw-bold text-danger"><i class="bi bi-shield-lock-fill"></i> 執法資安規範聲明</h5></div>
+            <div class="modal-body">
+                <p class="small text-secondary">1. 嚴禁輸入真實姓名，請使用「A男」、「某士官」等代稱。<br>2. 本程式依據刑訴法 93-1 條設計。<br>3. 數據採本地加密運算，不留存、不紀錄。</p>
             </div>
-            <div class="modal-footer border-0"><button type="button" class="btn btn-primary w-100" data-bs-dismiss="modal">已了解並同意</button></div>
+            <div class="modal-footer border-0"><button type="button" class="btn btn-primary w-100 fw-bold" data-bs-dismiss="modal">遵照規範使用</button></div>
         </div>
     </div>
 </div>
 
 <div class="header-bg text-center">
     <h3 class="fw-bold mb-0">16H 偵查助手 Pro</h3>
-    <p class="mb-0 small" style="opacity: 0.9;">臺北憲兵隊 數位執法專用</p>
+    <p class="mb-0 small">臺北憲兵隊 專業偵訊輔助系統</p>
 </div>
 
 <div class="container">
-    <ul class="nav nav-pills nav-fill mb-4 bg-white p-2 border rounded-pill" id="pills-tab" role="tablist">
-        <li class="nav-item"><button class="nav-link active" data-bs-toggle="pill" data-bs-target="#calc-content">時限精算</button></li>
-        <li class="nav-item"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#analysis-content">偵分析</button></li>
-        <li class="nav-item"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#doc-content">公文產生</button></li>
+    <ul class="nav nav-pills nav-fill mb-4 bg-white p-2 border rounded-pill shadow-sm">
+        <li class="nav-item"><button class="nav-link active" data-bs-toggle="pill" data-bs-target="#calc-content"><i class="bi bi-clock"></i> 時限精算</button></li>
+        <li class="nav-item"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#analysis-content"><i class="bi bi-cpu"></i> 偵訊導師</button></li>
+        <li class="nav-item"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#doc-content"><i class="bi bi-printer"></i> 調閱公文</button></li>
     </ul>
 
     <div class="tab-content">
         <div class="tab-pane fade show active" id="calc-content">
-            <div class="card p-3 shadow-sm">
-                <h6 class="fw-bold mb-3 text-primary"><i class="bi bi-clock-history"></i> 刑事訴訟法 93-1 時限追蹤</h6>
+            <div class="card p-4 shadow-sm">
+                <h6 class="fw-bold mb-3 text-primary border-bottom pb-2"><i class="bi bi-calendar-check"></i> 刑訴法 93-1 障礙時限</h6>
                 
-                <div class="time-box mb-3">
-                    <label class="form-label text-danger">逮捕/到案時間</label>
-                    <input type="datetime-local" id="startTime" class="form-control form-control-sm">
+                <label class="form-label text-danger">逮捕/到案時間</label>
+                <input type="datetime-local" id="startTime" class="form-control mb-3">
+
+                <div class="time-input-group mb-3">
+                    <label class="form-label text-primary">法定障礙時間累計：</label>
+                    <div class="row g-2">
+                        <div class="col-6">
+                            <div class="input-group input-group-sm">
+                                <input type="number" id="dH" class="form-control" placeholder="0">
+                                <span class="input-group-text">小時</span>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="input-group input-group-sm">
+                                <input type="number" id="dM" class="form-control" placeholder="0">
+                                <span class="input-group-text">分鐘</span>
+                            </div>
+                        </div>
+                    </div>
+                    <small class="text-muted mt-1 d-block">（包含夜間停止、解送在途、等候律師/通譯等）</small>
                 </div>
 
-                <div class="row g-2 mb-2">
-                    <div class="col-6">
-                        <label class="form-label">夜間停止訊問 (小時)</label>
-                        <input type="number" id="nightHours" class="form-control form-control-sm" value="0" step="0.5">
-                    </div>
-                    <div class="col-6">
-                        <label class="form-label">解送在途時間 (小時)</label>
-                        <input type="number" id="travelHours" class="form-control form-control-sm" value="0" step="0.1">
-                    </div>
-                </div>
-
-                <div class="row g-2 mb-2">
-                    <div class="col-6">
-                        <label class="form-label">等候律師 (限4H)</label>
-                        <input type="number" id="lawyerHours" class="form-control form-control-sm" value="0" max="4" step="0.1">
-                    </div>
-                    <div class="col-6">
-                        <label class="form-label">等候通譯 (限6H)</label>
-                        <input type="number" id="translatorHours" class="form-control form-control-sm" value="0" max="6" step="0.1">
-                    </div>
-                </div>
-
-                <div class="row g-2 mb-3">
-                    <div class="col-6">
-                        <label class="form-label">法院提審/不可抗力</label>
-                        <input type="number" id="forceHours" class="form-control form-control-sm" value="0" step="0.1">
-                    </div>
-                    <div class="col-6">
-                        <label class="form-label">提審告知時間</label>
-                        <input type="datetime-local" id="noticeTime" class="form-control form-control-sm">
-                    </div>
-                </div>
-
-                <button class="btn btn-primary btn-action w-100" onclick="calculate931()">
-                    <i class="bi bi-calculator-fill"></i> 執行法定時限精算
-                </button>
-                
-                <div id="cRes" class="mt-3 result-area" style="display:none; border-left-color: #d32f2f;"></div>
+                <button class="btn btn-primary btn-action w-100 shadow" onclick="calc931()"><i class="bi bi-calculator-fill"></i> 執行法定精算</button>
+                <div id="cRes" class="mt-4 result-area shadow-sm" style="display:none; border-left-color: #d32f2f;"></div>
             </div>
         </div>
 
         <div class="tab-pane fade" id="analysis-content">
-            <div class="card p-3 shadow-sm">
-                <h6 class="fw-bold mb-3 text-warning"><i class="bi bi-search"></i> 案情框架與構成要件分析</h6>
-                <textarea id="caseBrief" class="form-control mb-3" rows="4" placeholder="請描述案情事實（例：A男於凌晨毀越門窗進入辦公室竊取電腦...）"></textarea>
-                <button class="btn btn-warning btn-action text-dark w-100" onclick="proAnalyze()">
-                    <i class="bi bi-journal-text"></i> 分析法條與重點
+            <div class="card p-4 shadow-sm">
+                <h6 class="fw-bold mb-3 text-warning"><i class="bi bi-mortarboard-fill"></i> 智慧筆錄製作與詢問要領</h6>
+                <textarea id="caseBrief" class="form-control mb-3" rows="4" placeholder="請輸入案情摘要（例：某士官長於營區內竊取新台幣200元...）"></textarea>
+                <button class="btn btn-warning btn-action text-dark w-100 shadow" onclick="mentorAnalyze()">
+                    <i class="bi bi-stars"></i> 啟動導師級分析
                 </button>
-                <div id="aRes" class="mt-3 result-area" style="display:none; background-color: #fcfdfd;"></div>
+                <div id="aRes" class="mt-4 result-area" style="display:none; font-size: 0.88rem;"></div>
             </div>
         </div>
 
         <div class="tab-pane fade" id="doc-content">
-            <div class="card p-3 shadow-sm">
-                <h6 class="fw-bold mb-3 text-success"><i class="bi bi-file-earmark-text"></i> 臺北憲兵隊 調閱公文</h6>
-                <input type="text" id="commN" class="form-control mb-2" placeholder="社區管理委員會名稱">
-                <input type="text" id="cPos" class="form-control mb-3" placeholder="鏡頭位置 (如：地下車道)">
-                <button class="btn btn-success btn-action w-100" onclick="genDoc()">
-                    <i class="bi bi-printer"></i> 生成公文
-                </button>
-                <div id="dRes" class="mt-3" style="display:none;">
-                    <div id="dBody" class="p-3 border bg-white small rounded" style="white-space: pre-wrap; font-family: serif; font-size: 0.85rem;"></div>
-                    <button class="btn btn-outline-primary btn-sm w-100 mt-2" onclick="copyC('dBody')">複製內容</button>
+            <div class="card p-4 shadow-sm">
+                <h6 class="fw-bold mb-3 text-success"><i class="bi bi-file-earmark-check"></i> 臺北憲兵隊 公文產生</h6>
+                <input type="text" id="commN" class="form-control mb-2" placeholder="社區/單位名稱">
+                <input type="text" id="cPos" class="form-control mb-3" placeholder="調閱範圍 (如：監視器影像及名單)">
+                <button class="btn btn-success btn-action w-100 shadow" onclick="genDoc()"><i class="bi bi-send-check"></i> 生成公文範本</button>
+                <div id="dRes" class="mt-4" style="display:none;">
+                    <div id="dBody" class="p-3 border bg-white small rounded shadow-sm" style="white-space: pre-wrap; font-family: serif; line-height: 1.8;"></div>
+                    <button class="btn btn-outline-primary btn-sm w-100 mt-2" onclick="copyC('dBody')"><i class="bi bi-copy"></i> 複製內容</button>
                 </div>
             </div>
         </div>
@@ -130,52 +109,77 @@
 <script>
     window.onload = function() { new bootstrap.Modal(document.getElementById('disclaimerModal')).show(); };
 
-    function calculate931() {
-        const start = new Date(document.getElementById('startTime').value);
-        if (isNaN(start)) return alert("請輸入逮捕時間");
-
-        const night = parseFloat(document.getElementById('nightHours').value) || 0;
-        const travel = parseFloat(document.getElementById('travelHours').value) || 0;
-        const lawyer = Math.min(parseFloat(document.getElementById('lawyerHours').value) || 0, 4);
-        const trans = Math.min(parseFloat(document.getElementById('translatorHours').value) || 0, 6);
-        const force = parseFloat(document.getElementById('forceHours').value) || 0;
-
-        const totalDeduct = night + travel + lawyer + trans + force;
-        const deadline = new Date(start.getTime() + (16 + totalDeduct) * 3600000);
-        const suggest = new Date(deadline.getTime() - 7200000);
+    function calc931() {
+        const s = new Date(document.getElementById('startTime').value);
+        if (isNaN(s)) return alert("請輸入時間");
+        const h = parseInt(document.getElementById('dH').value) || 0;
+        const m = parseInt(document.getElementById('dM').value) || 0;
+        
+        const totalMinutes = (16 * 60) + (h * 60) + m;
+        const dl = new Date(s.getTime() + totalMinutes * 60000);
+        const suggest = new Date(dl.getTime() - 120 * 60000);
 
         document.getElementById('cRes').innerHTML = `
-            <div class="law-tag mb-2">依刑事訴訟法第 93-1 條計算</div>
-            總扣除時間：<b class="text-primary">${totalDeduct.toFixed(1)}</b> 小時<br>
-            建議移送時間：<b>${suggest.toLocaleString()}</b><br>
-            <span class="text-danger fw-bold">法律解送底線：${deadline.toLocaleString()}</span>
-            <hr><small class="text-muted">※ 已依規限制等候律師上限4H、通譯上限6H。</small>
+            <div class="fw-bold mb-2"><i class="bi bi-info-circle-fill text-primary"></i> 刑訴法 93-1 計算結果</div>
+            障礙扣除累計：<span class="text-primary">${h} 時 ${m} 分</span><br>
+            建議移送時間：<span class="fw-bold text-success">${suggest.toLocaleString()}</span><br>
+            <div class="mt-2 py-2 border-top text-danger fw-bold" style="font-size: 1.1rem;">法律解送底線：${dl.toLocaleString()}</div>
+            <hr><small class="text-muted">※ 請注意：等候律師不計入時間上限為 4 小時。</small>
         `;
         document.getElementById('cRes').style.display = 'block';
     }
 
-    function proAnalyze() {
+    function mentorAnalyze() {
         const text = document.getElementById('caseBrief').value;
-        if (!text) return alert("請輸入案情");
-        let res = "";
+        if (!text) return alert("請輸入案情摘要");
         
-        if (text.includes("毀") || text.includes("越") || text.includes("牆") || text.includes("門")) {
-            res = `<div class="law-tag">適用：刑法第 321 條 (加重竊盜)</div><hr><b>【構成要件】</b><br>1. 毀越門窗安全設備。<br>2. 侵入住宅或有人居住之建築物。<br>3. 具備不法所有意圖與竊取行為。<br><b>【詢問重點】</b><br>如何進入？有無攜帶兇器？`;
-        } else {
-            res = `<div class="law-tag">適用：一般偵查程序</div><hr><b>【分析範疇】</b><br>1. 主觀犯意與客觀行為之連結。<br>2. 刑訴法第 95 條告知義務。<br>3. 證據鏈之完整性檢視。`;
-        }
-        document.getElementById('aRes').innerHTML = res;
+        let type = "一般案件";
+        if (text.includes("竊") || text.includes("拿") || text.includes("偷")) type = "竊盜案";
+        if (text.includes("騙") || text.includes("詐")) type = "詐欺案";
+
+        let analysis = `
+            <div class="text-center fw-bold text-primary mb-3">✨ 偵訊導師分析指引 ✨</div>
+            你好！我是你的偵訊導師。針對此案，我為你整理了核心指引：
+            
+            <div class="analysis-title">1. ✨ 構成要件分析：【${type}】</div>
+            依據《陸海空軍刑法》第 76 條及《刑法》相關規定：
+            <ul>
+                <li><b>主觀要件：</b>需釐清是否有「不法所有意圖」。防止犯嫌以「誤拿」或「借用」作為抗辯。</li>
+                <li><b>客觀要件：</b>確認是否符合「破壞持有、建立持有」之行為。</li>
+                <li><b>身分考量：</b>涉案人具備軍人身分，應額外考量營區紀律與相關通報。</li>
+            </ul>
+
+            <div class="analysis-title">2. ✨ 詢問策略：關鍵 5 問 (Q&A)</div>
+            <div class="q-box">
+                <b>Q1（事實）：</b>在某時某地，是否有從某處取得該物品？<br>
+                <b>Q2（細節）：</b>當時如何進入？是否翻動他人櫃位？（確認是否涉及毀越安全設備）<br>
+                <b>Q3（意圖）：</b>拿取前是否經過同意？為何未即時歸還？<br>
+                <b>Q4（證據）：</b>面對監視器或證人指證，作何解釋？<br>
+                <b>Q5（流向）：</b>贓物現位於何處？
+            </div>
+
+            <div class="analysis-title">3. ✨ 程序正義提醒</div>
+            <ul>
+                <li><b>刑訴 95 條：</b>權利告知必須落實，否則初供喪失證據能力。</li>
+                <li><b>錄音錄影：</b>全程連續錄製，筆錄應與錄音相符。</li>
+                <li><b>夜間限制：</b>嚴禁違反 100-3 條強制詢問。</li>
+            </ul>
+        `;
+        
+        document.getElementById('aRes').innerHTML = analysis;
         document.getElementById('aRes').style.display = 'block';
     }
 
     function genDoc() {
         const y = new Date().getFullYear() - 1911;
-        const t = `臺北憲兵隊 函\n發文日期：中華民國 ${y} 年 ${new Date().getMonth()+1} 月 ${new Date().getDate()} 日\n\n主旨：協助提供影像及名單。\n說明：本隊辦案需要，依刑訴法及個資法辦理。正本：${document.getElementById('commN').value}管委會`;
+        const m = new Date().getMonth() + 1;
+        const d = new Date().getDate();
+        const t = `臺北憲兵隊 函\n發文日期：中華民國 ${y} 年 ${m} 月 ${d} 日\n發文字號：（115）北憲字第（      ）號\n\n主旨：協助提供相關影像資料及名單。\n說明：本隊因偵辦刑事案件，亟需貴單位協助。正本：${document.getElementById('commN').value}`;
         document.getElementById('dBody').innerText = t;
         document.getElementById('dRes').style.display = 'block';
     }
 
-    function copyC(id) { navigator.clipboard.writeText(document.getElementById(id).innerText); alert("已複製"); }
+    function copyC(id) { navigator.clipboard.writeText(document.getElementById(id).innerText); alert("已複製內容"); }
 </script>
 </body>
 </html>
