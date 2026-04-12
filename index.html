@@ -1,0 +1,82 @@
+<div class="card mt-4">
+    <div class="card-header bg-primary text-white">
+        <h5><i class="bi bi-file-earmark-text"></i> 調閱社區監視器公文產生器</h5>
+    </div>
+    <div class="card-body">
+        <form id="officialDocForm">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label">社區名稱</label>
+                    <input type="text" id="communityName" class="form-control" placeholder="例如：幸福家園">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">案由</label>
+                    <input type="text" id="caseReason" class="form-control" placeholder="例如：財物失竊案">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">調閱開始時間</label>
+                    <input type="datetime-local" id="startTime" class="form-control">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">調閱結束時間</label>
+                    <input type="datetime-local" id="endTime" class="form-control">
+                </div>
+                <div class="col-12">
+                    <label class="form-label">鏡頭位置描述</label>
+                    <textarea id="cameraLocation" class="form-control" rows="2" placeholder="例如：大門入口、地下車道出入口"></textarea>
+                </div>
+            </div>
+            <button type="button" class="btn btn-success mt-3" onclick="generateDoc()">生成公文範本</button>
+        </form>
+
+        <div id="docResult" class="mt-4" style="display:none;">
+            <h6>產生的公文內容：</h6>
+            <div class="border p-3 bg-light" id="docContent" style="white-space: pre-wrap; font-family: '標楷體', serif;"></div>
+            <button class="btn btn-outline-secondary btn-sm mt-2" onclick="copyToClipboard()">複製文字</button>
+        </div>
+    </div>
+</div>
+
+<script>
+function generateDoc() {
+    const community = document.getElementById('communityName').value || "（社區名稱）";
+    const reason = document.getElementById('caseReason').value || "（案由）";
+    const start = document.getElementById('startTime').value.replace('T', ' ');
+    const end = document.getElementById('endTime').value.replace('T', ' ');
+    const location = document.getElementById('cameraLocation').value || "相關監視器鏡頭";
+    
+    const today = new Date();
+    const dateStr = `中華民國 ${today.getFullYear() - 1911} 年 ${today.getMonth() + 1} 月 ${today.getDate()} 日`;
+
+    const template = `（機關名稱） 函
+
+發文日期：${dateStr}
+發文字號：（年度）字第（編號）號
+速別：普通件
+密等及解密條件或保密期限：普通
+
+主旨：為辦理${reason}偵查需要，請 貴管理委員會協助提供社區監視器影像資料，請 查照。
+
+說明：
+一、依據《刑事訴訟法》第 230 條、第 231 條及《個人資料保護法》第 15 條及第 16 條規定辦理。
+二、案緣本機關近日接獲民眾報案，於 貴社區周邊發生${reason}，為釐清事實真相及追蹤嫌疑人動線，確有調閱監視器之必要。
+三、需調閱之相關資訊如下：
+    * 調閱時段：${start} 至 ${end}。
+    * 鏡頭位置：${location}。
+四、貴管理委員會提供之影像資料，僅供本機關執行公務使用，本機關將依《個人資料保護法》相關規定負保密之責。
+五、如能提供協助，請將相關影像儲存於隨身碟或光碟，由本案承辦人領取，或通知本機關派員前往現場拷貝。
+
+正本：${community}管理委員會
+副本：本機關存查單位`;
+
+    document.getElementById('docContent').innerText = template;
+    document.getElementById('docResult').style.display = 'block';
+}
+
+function copyToClipboard() {
+    const content = document.getElementById('docContent').innerText;
+    navigator.clipboard.writeText(content).then(() => {
+        alert('公文內容已複製到剪貼簿');
+    });
+}
+</script>
