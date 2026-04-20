@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>智能偵詢要領智慧輔助系統 | 全功能版</title>
+    <title>智能偵詢要領智慧輔助系統 | 全功能發佈版</title>
     <!-- 引入外部資源 -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
@@ -18,13 +18,14 @@
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
         .animate-fade-in { animation: fadeIn 0.5s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .glass-effect { background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(12px); }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-800">
     <div id="root"></div>
 
     <script type="text/babel">
-        const { useState, useEffect, useRef } = React;
+        const { useState, useEffect, useRef, useCallback } = React;
 
         /**
          * 修正後的圖標組件
@@ -35,7 +36,6 @@
 
             useEffect(() => {
                 if (window.lucide && containerRef.current) {
-                    // 清空容器並放入新的 i 標籤供 Lucide 替換
                     containerRef.current.innerHTML = `<i data-lucide="${name}"></i>`;
                     window.lucide.createIcons({
                         attrs: {
@@ -52,18 +52,20 @@
         };
 
         const App = () => {
+            const [apiKey, setApiKey] = useState(localStorage.getItem('AIzaSyA8dZu8fy_2QOUnrMcQEy0QWshfGxw-wiI') || "");
+            const [showSettings, setShowSettings] = useState(!localStorage.getItem('gemini_api_key'));
             const [images, setImages] = useState({});
             const [imgLoading, setImgLoading] = useState({});
             const [aiInput, setAiInput] = useState("");
             const [aiResult, setAiResult] = useState(null);
             const [isAiProcessing, setIsAiProcessing] = useState(false);
-
-            const apiKey = ""; // 執行環境會自動提供
+            const [errorMsg, setErrorMsg] = useState("");
 
             // Gemini API 呼叫 (含退避重試)
             const callGemini = async (userQuery, systemPrompt, retries = 5, delay = 1000) => {
+                const currentKey = apiKey || ""; // 優先使用使用者設定的 Key
                 try {
-                    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
+                    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${currentKey}`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
@@ -71,9 +73,9 @@
                             systemInstruction: { parts: [{ text: systemPrompt }] }
                         })
                     });
-                    if (!response.ok && retries > 0) {
-                        await new Promise(r => setTimeout(r, delay));
-                        return callGemini(userQuery, systemPrompt, retries - 1, delay * 2);
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        throw new Error(errorData.error?.message || "API 請求失敗");
                     }
                     const result = await response.json();
                     return result.candidates?.[0]?.content?.parts?.[0]?.text;
@@ -87,24 +89,32 @@
             };
 
             const handleAiAnalyze = async () => {
+                if (!apiKey) {
+                    setShowSettings(true);
+                    return;
+                }
                 if (!aiInput.trim()) return;
                 setIsAiProcessing(true);
                 setAiResult(null);
+                setErrorMsg("");
                 const systemPrompt = `你是一位專業的司法警察偵訊導師。針對案情提供：1.構成要件分析 2.詢問策略(5個Q&A) 3.程序提醒。使用繁體中文並搭配 emoji。`;
                 try {
                     const text = await callGemini(aiInput, systemPrompt);
                     setAiResult(text);
                 } catch (e) {
-                    setAiResult("⚠️ AI 分析失敗，請檢查網路連線後重試。");
+                    setErrorMsg("連線失敗：" + e.message);
                 } finally {
                     setIsAiProcessing(false);
                 }
             };
 
-            // 圖像生成 (含退避重試)
-            const generateImage = async (key, promptText, retries = 3, delay = 1000) => {
+            const generateImage = useCallback(async (id, promptText, keyOverride) => {
+                const currentKey = keyOverride || apiKey;
+                if (!currentKey) return;
+
+                setImgLoading(prev => ({ ...prev, [id]: true }));
                 try {
-                    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/imagen-4.0-generate-001:predict?key=${apiKey}`, {
+                    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/imagen-4.0-generate-001:predict?key=${currentKey}`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
@@ -114,40 +124,88 @@
                     });
                     const result = await response.json();
                     if (result.predictions?.[0]) {
-                        setImages(p => ({ ...p, [key]: `data:image/png;base64,${result.predictions[0].bytesBase64Encoded}` }));
+                        setImages(p => ({ ...p, [id]: `data:image/png;base64,${result.predictions[0].bytesBase64Encoded}` }));
                     }
                 } catch (e) {
-                    if (retries > 0) {
-                        await new Promise(r => setTimeout(r, delay));
-                        return generateImage(key, promptText, retries - 1, delay * 2);
-                    }
+                    console.error(e);
                 } finally {
-                    setImgLoading(p => ({ ...p, [key]: false }));
+                    setImgLoading(p => ({ ...p, [id]: false }));
                 }
+            }, [apiKey]);
+
+            const saveSettings = (key) => {
+                localStorage.setItem('gemini_api_key', key);
+                setApiKey(key);
+                setShowSettings(false);
+                setErrorMsg("");
+                // 重新觸發圖片生成
+                initImages(key);
+            };
+
+            const initImages = (key) => {
+                generateImage('legal', 'Justice scales icon blue', key);
+                generateImage('room', 'Modern interrogation room setup', key);
+                generateImage('record', 'Police investigation folder', key);
             };
 
             useEffect(() => {
-                setImgLoading({ legal: true, room: true, record: true });
-                generateImage('legal', 'Justice scales icon blue');
-                generateImage('room', 'Modern interrogation room setup');
-                generateImage('record', 'Police investigation folder');
+                if (apiKey) initImages(apiKey);
             }, []);
 
             return (
-                <div className="min-h-screen p-4 md:p-8">
+                <div className="min-h-screen p-4 md:p-8 flex flex-col items-center">
                     {/* Header */}
-                    <header className="max-w-6xl mx-auto mb-10 text-center animate-fade-in">
+                    <header className="max-w-6xl w-full mb-10 text-center animate-fade-in relative">
+                        <div className="absolute right-0 top-0">
+                             <button 
+                                onClick={() => setShowSettings(true)}
+                                className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold hover:bg-slate-50 shadow-sm transition-all"
+                            >
+                                <Icon name="settings" size={14} /> 系統設定
+                            </button>
+                        </div>
                         <div className="inline-flex items-center gap-2 bg-blue-600 text-white px-4 py-1.5 rounded-full text-xs font-bold mb-4 shadow-lg">
                             <Icon name="shield-check" size={14} /> 臺北憲兵隊司法警察實務訓練素材
                         </div>
                         <h1 className="text-3xl md:text-4xl font-black text-slate-900 mb-4 tracking-tight">偵詢要領智慧輔助平台</h1>
                         <p className="text-slate-500 max-w-2xl mx-auto text-sm">
-                            整合實務手冊之構成要件，運用 ✨ Gemini 2.5 進行智能研析與策略引導。
+                            整合實務手冊之構成要件，運用 ✨ AI 進行智能研析與策略引導。
                         </p>
                     </header>
 
-                    <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8">
-                        
+                    {/* 設定視窗 */}
+                    {showSettings && (
+                        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+                            <div className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-md p-10 animate-fade-in">
+                                <h3 className="text-2xl font-black mb-2 flex items-center gap-3 text-slate-900">
+                                    <Icon name="key" className="text-blue-600" /> AI 服務設定
+                                </h3>
+                                <p className="text-slate-500 text-sm mb-8">請輸入您的 Google API 金鑰以啟用聯網 AI 功能。金鑰將儲存在您的瀏覽器中。</p>
+                                <input 
+                                    type="password"
+                                    className="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl mb-6 focus:border-blue-500 outline-none text-sm shadow-inner"
+                                    placeholder="在此貼上您的 API Key..."
+                                    defaultValue={apiKey}
+                                    id="key-input"
+                                />
+                                <div className="flex gap-4">
+                                    <button 
+                                        onClick={() => saveSettings(document.getElementById('key-input').value)}
+                                        className="flex-1 bg-blue-600 text-white py-4 rounded-2xl font-black shadow-xl hover:bg-blue-700 transition-all"
+                                    >儲存設定</button>
+                                    <button 
+                                        onClick={() => setShowSettings(false)}
+                                        className="px-6 py-4 border-2 border-slate-100 rounded-2xl font-black text-slate-400 hover:bg-slate-50 transition-all"
+                                    >取消</button>
+                                </div>
+                                <div className="mt-8 pt-6 border-t border-slate-50 text-center">
+                                    <a href="https://aistudio.google.com/" target="_blank" className="text-[10px] font-bold text-blue-500 hover:underline uppercase tracking-widest">尚未取得金鑰？點此前往申請</a>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    <div className="max-w-6xl w-full grid grid-cols-1 lg:grid-cols-3 gap-8">
                         {/* 左側：AI 工作台 */}
                         <div className="lg:col-span-1 space-y-8 animate-fade-in">
                             <section className="bg-white rounded-2xl shadow-xl border border-blue-100 overflow-hidden">
@@ -155,7 +213,7 @@
                                     <div className="flex items-center gap-2 font-bold">
                                         <Icon name="sparkles" className="text-yellow-400" /> ✨ 智能偵詢助手
                                     </div>
-                                    <p className="text-blue-100 text-[10px] mt-1">輸入案情簡述，獲取專業分析與詢問建議</p>
+                                    <p className="text-blue-100 text-[10px] mt-1">輸入案情摘要，獲取專業分析與詢問建議</p>
                                 </div>
                                 <div className="p-6">
                                     <textarea 
@@ -174,6 +232,12 @@
                                         {isAiProcessing ? <Icon name="loader-2" className="animate-spin" /> : <Icon name="brain-circuit" />}
                                         {isAiProcessing ? "AI 分析中..." : "開始智慧研析"}
                                     </button>
+
+                                    {errorMsg && (
+                                        <div className="mt-4 p-3 bg-red-50 text-red-600 text-xs rounded-xl border border-red-100 font-medium">
+                                            {errorMsg}
+                                        </div>
+                                    )}
 
                                     {aiResult && (
                                         <div className="mt-6 p-4 bg-indigo-50 rounded-2xl border border-indigo-100 text-sm leading-relaxed whitespace-pre-wrap max-h-96 overflow-y-auto custom-scrollbar">
@@ -202,12 +266,11 @@
 
                         {/* 右側：詳細資訊 */}
                         <div className="lg:col-span-2 space-y-8 animate-fade-in" style={{animationDelay: '0.2s'}}>
-                            
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                 <section className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-                                    <div className="h-40 bg-slate-100 flex items-center justify-center relative">
+                                    <div className="h-40 bg-slate-100 flex items-center justify-center relative overflow-hidden">
                                         {images.room ? <img src={images.room} className="w-full h-full object-cover" /> : <Icon name="camera" size={40} className="text-slate-300" />}
-                                        {imgLoading.room && <div className="absolute inset-0 bg-white/50 flex items-center justify-center text-[10px] text-slate-400 font-bold uppercase tracking-widest">AI Generating</div>}
+                                        {imgLoading.room && <div className="absolute inset-0 bg-white/50 flex items-center justify-center text-[10px] text-slate-400 font-bold uppercase tracking-widest animate-pulse">AI Generating</div>}
                                     </div>
                                     <div className="p-5">
                                         <h3 className="font-bold text-sm mb-3 flex items-center gap-2 text-slate-900">
@@ -222,9 +285,9 @@
                                 </section>
 
                                 <section className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-                                    <div className="h-40 bg-slate-100 flex items-center justify-center relative">
+                                    <div className="h-40 bg-slate-100 flex items-center justify-center relative overflow-hidden">
                                         {images.record ? <img src={images.record} className="w-full h-full object-cover" /> : <Icon name="file-text" size={40} className="text-slate-300" />}
-                                        {imgLoading.record && <div className="absolute inset-0 bg-white/50 flex items-center justify-center text-[10px] text-slate-400 font-bold uppercase tracking-widest">AI Generating</div>}
+                                        {imgLoading.record && <div className="absolute inset-0 bg-white/50 flex items-center justify-center text-[10px] text-slate-400 font-bold uppercase tracking-widest animate-pulse">AI Generating</div>}
                                     </div>
                                     <div className="p-5">
                                         <h3 className="font-bold text-sm mb-3 flex items-center gap-2 text-slate-900">
@@ -283,8 +346,8 @@
                         </div>
                     </div>
 
-                    <footer className="mt-12 text-center text-slate-400 text-[10px] font-bold uppercase tracking-[0.2em] border-t border-slate-100 pt-8">
-                        © 2026 TPMP Intelligent Framework | AI Core: Gemini 2.5 Flash
+                    <footer className="mt-12 text-center text-slate-400 text-[10px] font-bold uppercase tracking-[0.2em] border-t border-slate-100 pt-8 w-full max-w-6xl">
+                        © 2026 TPMP Intelligent Framework | AI Core: Gemini Flash
                     </footer>
                 </div>
             );
